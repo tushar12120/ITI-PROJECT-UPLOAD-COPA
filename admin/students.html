@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students List - ITI COPA Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>ITI COPA</span>
+            </a>
+
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+                <li><a href="students.html" class="active"><span class="icon">👥</span> Students</a></li>
+                <li><a href="submissions.html"><span class="icon">📤</span> Submissions</a></li>
+                <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+                <li><a href="#" onclick="adminLogout()"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>👥 Registered Students</h1>
+                    <p class="welcome-text">View all registered student accounts</p>
+                </div>
+                <div class="d-flex gap-2 align-center">
+                    <span id="studentCount" class="badge badge-primary">0 Students</span>
+                </div>
+            </div>
+
+            <!-- Students List -->
+            <div id="studentsList">
+                <div class="text-center mt-4">
+                    <span class="loader"></span>
+                    <p class="text-muted mt-2">Loading students...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Student Submissions Modal -->
+    <div class="modal-overlay" id="studentSubmissionsModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 id="studentModalTitle">📋 Student Submissions</h3>
+                <button class="modal-close" onclick="closeStudentModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="studentSubmissionsContent">
+                <div class="text-center">
+                    <span class="loader"></span>
+                    <p>Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeStudentModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        // Protect route
+        if (!protectAdminRoute()) { }
+
+        // Load students
+        async function loadStudents() {
+            const students = await getStudents();
+            document.getElementById('studentCount').textContent = students.length + ' Students';
+            renderStudentsTable(students, 'studentsList');
+        }
+
+        // View student submissions
+        async function viewStudentSubmissions(studentId, studentName) {
+            document.getElementById('studentSubmissionsModal').classList.add('active');
+            document.getElementById('studentModalTitle').textContent = '📋 ' + studentName + ' - Submissions';
+            document.getElementById('studentSubmissionsContent').innerHTML = `
+                <div class="text-center">
+                    <span class="loader"></span>
+                    <p>Loading submissions...</p>
+                </div>
+            `;
+
+            const submissions = await getStudentSubmissions(studentId);
+
+            if (submissions.length === 0) {
+                document.getElementById('studentSubmissionsContent').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📤</div>
+                        <h3>No Submissions</h3>
+                        <p>This student hasn't submitted any projects yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Status badge helper
+            function getStatusBadge(status) {
+                switch (status) {
+                    case 'accepted': return '<span class="badge badge-success">✅ Accepted</span>';
+                    case 'rejected': return '<span class="badge badge-danger">❌ Rejected</span>';
+                    default: return '<span class="badge badge-warning">⏳ Pending</span>';
+                }
+            }
+
+            document.getElementById('studentSubmissionsContent').innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>File</th>
+                                <th>Status</th>
+                                <th>Submitted On</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${submissions.map(s => `
+                                <tr>
+                                    <td><strong>${s.projects?.title || 'Unknown'}</strong></td>
+                                    <td>
+                                        <a href="${s.file_url}" target="_blank" class="btn btn-sm btn-success">📥 Download</a>
+                                    </td>
+                                    <td>${getStatusBadge(s.status)}</td>
+                                    <td>${formatDateTime(s.submitted_at)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-card); border-radius: 8px;">
+                    <strong>Total Submissions:</strong> ${submissions.length} |
+                    <strong>Accepted:</strong> ${submissions.filter(s => s.status === 'accepted').length} |
+                    <strong>Pending:</strong> ${submissions.filter(s => s.status === 'pending').length} |
+                    <strong>Rejected:</strong> ${submissions.filter(s => s.status === 'rejected').length}
+                </div>
+            `;
+        }
+
+        // Close modal
+        function closeStudentModal() {
+            document.getElementById('studentSubmissionsModal').classList.remove('active');
+        }
+
+        // Initial load
+        loadStudents();
+    </script>
+</body>
+
+</html>

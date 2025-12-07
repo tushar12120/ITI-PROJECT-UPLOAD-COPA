@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ITI COPA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>ITI COPA</span>
+            </a>
+
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html" class="active"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+                <li><a href="students.html"><span class="icon">👥</span> Students</a></li>
+                <li><a href="submissions.html"><span class="icon">📤</span> Submissions</a></li>
+                <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+                <li><a href="#" onclick="adminLogout()"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>Dashboard</h1>
+                    <p class="welcome-text">Welcome back, Admin!</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon purple">👥</div>
+                    <div class="stat-info">
+                        <h3 id="statStudents">0</h3>
+                        <p>Total Students</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue">📁</div>
+                    <div class="stat-info">
+                        <h3 id="statProjects">0</h3>
+                        <p>Total Projects</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">📤</div>
+                    <div class="stat-info">
+                        <h3 id="statSubmissions">0</h3>
+                        <p>Total Submissions</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <a href="projects.html" class="btn btn-primary">➕ Add New Project</a>
+                        <a href="students.html" class="btn btn-secondary">👥 View Students</a>
+                        <a href="submissions.html" class="btn btn-secondary">📤 View Submissions</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        // Protect route
+        if (!protectAdminRoute()) {
+            // Redirect handled by protectAdminRoute
+        }
+
+        // Load dashboard stats
+        async function loadDashboard() {
+            const stats = await getDashboardStats();
+            document.getElementById('statStudents').textContent = stats.totalStudents;
+            document.getElementById('statProjects').textContent = stats.totalProjects;
+            document.getElementById('statSubmissions').textContent = stats.totalSubmissions;
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>

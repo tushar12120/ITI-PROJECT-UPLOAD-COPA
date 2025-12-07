@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login - ITI COPA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="../index.html" class="logo">
+                    <div class="logo-icon">👨‍🎓</div>
+                    <span>Student Portal</span>
+                </a>
+                <h1 id="formTitle">Student Login</h1>
+                <p id="formSubtitle">Login to submit your projects</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Enter your password"
+                        required>
+                </div>
+
+                <div id="loginError" class="alert alert-danger hidden"></div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    🔓 Login
+                </button>
+            </form>
+
+            <!-- Register Form (Hidden by default) -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label class="form-label" for="regName">Full Name *</label>
+                    <input type="text" id="regName" class="form-control" placeholder="Enter your full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="regEmail">Email *</label>
+                    <input type="email" id="regEmail" class="form-control" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="regTrade">Trade</label>
+                    <input type="text" id="regTrade" class="form-control" value="COPA" readonly style="opacity: 0.7;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="regPassword">Password *</label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="Create a password"
+                        required minlength="4">
+                </div>
+
+                <div id="registerError" class="alert alert-danger hidden"></div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    ✨ Create Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p id="toggleText">Don't have an account? <a href="#" onclick="toggleForms(); return false;">Register
+                        here</a></p>
+                <br>
+                <a href="../index.html">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/student.js"></script>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const toggleText = document.getElementById('toggleText');
+        const formTitle = document.getElementById('formTitle');
+        const formSubtitle = document.getElementById('formSubtitle');
+
+        let isLoginMode = true;
+
+        // Toggle between login and register
+        function toggleForms() {
+            isLoginMode = !isLoginMode;
+
+            if (isLoginMode) {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                formTitle.textContent = 'Student Login';
+                formSubtitle.textContent = 'Login to submit your projects';
+                toggleText.innerHTML = 'Don\'t have an account? <a href="#" onclick="toggleForms(); return false;">Register here</a>';
+            } else {
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+                formTitle.textContent = 'Create Account';
+                formSubtitle.textContent = 'Register to start submitting projects';
+                toggleText.innerHTML = 'Already have an account? <a href="#" onclick="toggleForms(); return false;">Login here</a>';
+            }
+        }
+
+        // Login form submit
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader"></span> Logging in...';
+            errorDiv.classList.add('hidden');
+
+            const result = await studentLogin(email, password);
+
+            if (result.success) {
+                window.location.href = 'dashboard.html';
+            } else {
+                errorDiv.textContent = result.message;
+                errorDiv.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '🔓 Login';
+            }
+        });
+
+        // Register form submit
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const errorDiv = document.getElementById('registerError');
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader"></span> Creating account...';
+            errorDiv.classList.add('hidden');
+
+            const result = await registerStudent(name, email, password);
+
+            if (result.success) {
+                window.location.href = 'dashboard.html';
+            } else {
+                errorDiv.textContent = result.message;
+                errorDiv.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '✨ Create Account';
+            }
+        });
+
+        // Redirect if already logged in
+        if (isStudentLoggedIn()) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+
+</html>

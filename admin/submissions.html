@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submissions - ITI COPA Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>ITI COPA</span>
+            </a>
+
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+                <li><a href="students.html"><span class="icon">👥</span> Students</a></li>
+                <li><a href="submissions.html" class="active"><span class="icon">📤</span> Submissions</a></li>
+                <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+                <li><a href="#" onclick="adminLogout()"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>📤 Student Submissions</h1>
+                    <p class="welcome-text">View and download student submissions</p>
+                </div>
+                <div class="d-flex gap-2 align-center">
+                    <span id="submissionCount" class="badge badge-success">0 Submissions</span>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                        <label class="form-label" for="projectFilter">📁 Filter by Project:</label>
+                        <select id="projectFilter" class="form-control">
+                            <option value="">-- All Projects --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                        <label class="form-label" for="statusFilter">📊 Filter by Status:</label>
+                        <select id="statusFilter" class="form-control">
+                            <option value="">-- All Status --</option>
+                            <option value="pending">⏳ Pending</option>
+                            <option value="accepted">✅ Accepted</option>
+                            <option value="rejected">❌ Rejected</option>
+                        </select>
+                    </div>
+                    <button onclick="resetFilters()" class="btn btn-secondary btn-sm" style="margin-top: 1.5rem;">🔄
+                        Reset</button>
+                </div>
+            </div>
+
+            <!-- Submissions List -->
+            <div id="submissionsList">
+                <div class="text-center mt-4">
+                    <span class="loader"></span>
+                    <p class="text-muted mt-2">Loading submissions...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- File Preview Modal -->
+    <div class="modal-overlay" id="filePreviewModal">
+        <div class="modal" style="max-width: 900px; max-height: 90vh;">
+            <div class="modal-header">
+                <h3 id="previewTitle">📄 File Preview</h3>
+                <button class="modal-close" onclick="closeFilePreview()">&times;</button>
+            </div>
+            <div class="modal-body" id="previewContent" style="text-align: center; padding: 1rem;">
+                <!-- Preview content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <a id="previewDownload" href="#" download class="btn btn-success">📥 Download</a>
+                <button type="button" class="btn btn-secondary" onclick="closeFilePreview()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        // Protect route
+        if (!protectAdminRoute()) { }
+
+        let allSubmissions = [];
+        let allProjects = [];
+
+        // Load projects for filter dropdown
+        async function loadProjectsFilter() {
+            allProjects = await getProjects();
+            const select = document.getElementById('projectFilter');
+
+            select.innerHTML = '<option value="">-- Select Project --</option>' +
+                allProjects.map(p => `<option value="${p.id}">📋 ${p.title}</option>`).join('');
+        }
+
+        // Load and filter submissions
+        async function loadSubmissions() {
+            const projectId = document.getElementById('projectFilter').value;
+
+            // If no project selected, show message
+            if (!projectId) {
+                document.getElementById('submissionCount').textContent = '0 Submissions';
+                document.getElementById('submissionsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <h3>Select a Project First</h3>
+                        <p>ऊपर से कोई project select करें submissions देखने के लिए</p>
+                    </div>
+                `;
+                return;
+            }
+
+            allSubmissions = await getSubmissions();
+            applyFilters();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const projectId = document.getElementById('projectFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            // Filter by selected project (required)
+            let filtered = allSubmissions.filter(s => s.project_id === projectId);
+
+            // Filter by status (optional)
+            if (status) {
+                filtered = filtered.filter(s => s.status === status);
+            }
+
+            // Update count and render
+            document.getElementById('submissionCount').textContent = filtered.length + ' Submissions';
+
+            if (filtered.length === 0) {
+                document.getElementById('submissionsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📤</div>
+                        <h3>No Submissions Found</h3>
+                        <p>इस project के लिए अभी कोई submission नहीं है</p>
+                    </div>
+                `;
+                return;
+            }
+
+            renderSubmissionsTable(filtered, 'submissionsList');
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('projectFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            loadSubmissions();
+        }
+
+        // Add filter event listeners
+        document.getElementById('projectFilter').addEventListener('change', loadSubmissions);
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            if (document.getElementById('projectFilter').value) {
+                applyFilters();
+            }
+        });
+
+        // Initial load - just load projects, show "select project" message
+        loadProjectsFilter();
+        loadSubmissions();
+
+        // ============================================
+        // FILE PREVIEW FUNCTIONS
+        // ============================================
+
+        // Open file preview modal
+        function openFilePreview(fileUrl, fileName) {
+            const modal = document.getElementById('filePreviewModal');
+            const content = document.getElementById('previewContent');
+            const title = document.getElementById('previewTitle');
+            const downloadBtn = document.getElementById('previewDownload');
+
+            modal.classList.add('active');
+            title.textContent = '📄 ' + fileName;
+            downloadBtn.href = fileUrl;
+            downloadBtn.download = fileName;
+
+            const ext = fileName.split('.').pop().toLowerCase();
+
+            if (ext === 'pdf') {
+                // PDF - use iframe
+                content.innerHTML = `
+                    <iframe src="${fileUrl}" style="width: 100%; height: 70vh; border: 1px solid #ddd; border-radius: 8px;"></iframe>
+                `;
+            } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                // Image - display directly
+                content.innerHTML = `
+                    <img src="${fileUrl}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);" alt="${fileName}">
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <h3>Preview not available</h3>
+                        <p>Please download the file to view</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Close file preview modal
+        function closeFilePreview() {
+            document.getElementById('filePreviewModal').classList.remove('active');
+            document.getElementById('previewContent').innerHTML = '';
+        }
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeFilePreview();
+            }
+        });
+    </script>
+</body>
+
+</html>

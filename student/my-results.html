@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Results - ITI COPA Student</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>ITI COPA</span>
+            </a>
+
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+                <li><a href="submit.html"><span class="icon">📤</span> Submit Project</a></li>
+                <li><a href="my-submissions.html"><span class="icon">📋</span> My Submissions</a></li>
+                <li><a href="my-results.html" class="active"><span class="icon">📝</span> My Results</a></li>
+                <li><a href="#" onclick="studentLogout()"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>📝 My Exam Results</h1>
+                    <p class="welcome-text">Enter your Student ID to view results</p>
+                </div>
+            </div>
+
+            <!-- Search Box -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+                            <label class="form-label" for="studentIdInput">🔍 Student ID (7 Digits)</label>
+                            <input type="text" id="studentIdInput" class="form-control"
+                                placeholder="Enter 7 digit Student ID" maxlength="7">
+                        </div>
+                        <button onclick="searchResults()" class="btn btn-primary" id="searchBtn">🔍 Search
+                            Results</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results List -->
+            <div id="resultsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <h3>Enter Your Student ID</h3>
+                    <p>अपना 7 Digit Student ID दर्ज करें और Search करें</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Result Detail Modal -->
+    <div class="modal-overlay" id="resultDetailModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="resultModalTitle">📝 Result Details</h3>
+                <button class="modal-close" onclick="closeResultModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="resultModalContent">
+            </div>
+            <div class="modal-footer">
+                <button onclick="downloadResult()" class="btn btn-success">📥 Download PDF</button>
+                <button type="button" class="btn btn-secondary" onclick="closeResultModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/exam-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/student.js"></script>
+    <script src="../js/my-results.js"></script>
+    <script>
+        // Protect route
+        if (!protectStudentRoute()) { }
+    </script>
+</body>
+
+</html>

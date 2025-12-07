@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Announcements - ITI COPA Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>ITI COPA</span>
+            </a>
+
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+                <li><a href="students.html"><span class="icon">👥</span> Students</a></li>
+                <li><a href="submissions.html"><span class="icon">📤</span> Submissions</a></li>
+                <li><a href="announcements.html" class="active"><span class="icon">📢</span> Announcements</a></li>
+                <li><a href="#" onclick="adminLogout()"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>📢 Announcements</h1>
+                    <p class="welcome-text">Post notices for students</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">➕ New Announcement</button>
+            </div>
+
+            <!-- Announcements List -->
+            <div id="announcementsList">
+                <div class="text-center mt-4">
+                    <span class="loader"></span>
+                    <p class="text-muted mt-2">Loading announcements...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Announcement Modal -->
+    <div class="modal-overlay" id="addAnnouncementModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📢 New Announcement</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="announcementForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="title">Title *</label>
+                        <input type="text" id="title" class="form-control" placeholder="Announcement title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="message">Message *</label>
+                        <textarea id="message" class="form-control" rows="4" placeholder="Write your announcement..."
+                            required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" id="isImportant">
+                            ⚠️ Mark as Important (will show in red)
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Post Announcement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        // Protect route
+        if (!protectAdminRoute()) { }
+
+        // Modal functions
+        function openModal() {
+            document.getElementById('addAnnouncementModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('addAnnouncementModal').classList.remove('active');
+            document.getElementById('announcementForm').reset();
+        }
+
+        // Load announcements
+        async function loadAnnouncements() {
+            const announcements = await getAnnouncements();
+            renderAnnouncements(announcements);
+        }
+
+        // Render announcements
+        function renderAnnouncements(announcements) {
+            const container = document.getElementById('announcementsList');
+
+            if (announcements.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📢</div>
+                        <h3>No Announcements</h3>
+                        <p>Click "New Announcement" to post your first notice</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = announcements.map(a => `
+                <div class="card mb-3" style="border-left: 4px solid ${a.is_important ? 'var(--danger)' : 'var(--primary)'};">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h3 style="margin-bottom: 0.5rem; color: var(--text-primary);">
+                                ${a.is_important ? '⚠️' : '📢'} ${a.title}
+                            </h3>
+                            <p style="color: var(--text-secondary); white-space: pre-wrap;">${a.message}</p>
+                            <small class="text-muted">📅 ${formatDateTime(a.created_at)}</small>
+                        </div>
+                        <button onclick="handleDeleteAnnouncement('${a.id}')" class="btn btn-sm btn-danger">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Delete announcement
+        async function handleDeleteAnnouncement(id) {
+            if (!confirm('Are you sure you want to delete this announcement?')) return;
+
+            const result = await deleteAnnouncement(id);
+            if (result.success) {
+                showToast('Announcement deleted', 'success');
+                loadAnnouncements();
+            } else {
+                showToast('Failed to delete', 'danger');
+            }
+        }
+
+        // Form submit
+        document.getElementById('announcementForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const message = document.getElementById('message').value;
+            const isImportant = document.getElementById('isImportant').checked;
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader"></span> Posting...';
+
+            const result = await createAnnouncement(title, message, isImportant);
+
+            if (result.success) {
+                showToast('Announcement posted!', 'success');
+                closeModal();
+                loadAnnouncements();
+            } else {
+                showToast('Failed to post: ' + result.message, 'danger');
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Post Announcement';
+        });
+
+        // Initial load
+        loadAnnouncements();
+    </script>
+</body>
+
+</html>

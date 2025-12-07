@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Projects - ITI COPA Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>ITI COPA</span>
+            </a>
+
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="projects.html" class="active"><span class="icon">📁</span> Projects</a></li>
+                <li><a href="students.html"><span class="icon">👥</span> Students</a></li>
+                <li><a href="submissions.html"><span class="icon">📤</span> Submissions</a></li>
+                <li><a href="announcements.html"><span class="icon">📢</span> Announcements</a></li>
+                <li><a href="#" onclick="adminLogout()"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>📁 Manage Projects</h1>
+                    <p class="welcome-text">Create and manage project assignments</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">➕ Add New Project</button>
+            </div>
+
+            <!-- Projects List -->
+            <div id="projectsList">
+                <div class="text-center mt-4">
+                    <span class="loader"></span>
+                    <p class="text-muted mt-2">Loading projects...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Project Modal -->
+    <div class="modal-overlay" id="addProjectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ Add New Project</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="projectForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="title">Project Title *</label>
+                        <input type="text" id="title" class="form-control" placeholder="e.g., Calendar Making in Word"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea id="description" class="form-control"
+                            placeholder="Project instructions and details..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="deadline">Deadline (Date & Time)</label>
+                        <input type="datetime-local" id="deadline" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Project File (Optional)</label>
+                        <div class="file-input-wrapper">
+                            <div class="file-input-icon">📎</div>
+                            <p class="file-input-text">
+                                <span>Click to upload</span> or drag and drop<br>
+                                <small id="fileName">PDF, DOC, XLS, etc.</small>
+                            </p>
+                            <input type="file" id="projectFile"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Project Modal -->
+    <div class="modal-overlay" id="editProjectModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✏️ Edit Project</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editProjectForm">
+                <input type="hidden" id="editProjectId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="editTitle">Project Title *</label>
+                        <input type="text" id="editTitle" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editDescription">Description</label>
+                        <textarea id="editDescription" class="form-control"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="editDeadline">Deadline (Date & Time)</label>
+                        <input type="datetime-local" id="editDeadline" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="editSubmitBtn">Update Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+        // Protect route
+        if (!protectAdminRoute()) { }
+
+        // Modal functions - Add
+        function openModal() {
+            document.getElementById('addProjectModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('addProjectModal').classList.remove('active');
+            document.getElementById('projectForm').reset();
+            document.getElementById('fileName').textContent = 'PDF, DOC, XLS, etc.';
+        }
+
+        // Modal functions - Edit
+        function openEditProject(id, title, description, deadline) {
+            document.getElementById('editProjectId').value = id;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = description;
+
+            // Convert deadline to datetime-local format
+            if (deadline) {
+                const date = new Date(deadline);
+                // Format: YYYY-MM-DDTHH:MM
+                const formatted = date.getFullYear() + '-' +
+                    String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(date.getDate()).padStart(2, '0') + 'T' +
+                    String(date.getHours()).padStart(2, '0') + ':' +
+                    String(date.getMinutes()).padStart(2, '0');
+                document.getElementById('editDeadline').value = formatted;
+            }
+
+            document.getElementById('editProjectModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editProjectModal').classList.remove('active');
+            document.getElementById('editProjectForm').reset();
+        }
+
+        // File input display
+        document.getElementById('projectFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+            }
+        });
+
+        // Load projects
+        async function loadProjects() {
+            const projects = await getProjects();
+            renderProjectsTable(projects, 'projectsList');
+        }
+
+        // Form submit - Create
+        document.getElementById('projectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const deadline = document.getElementById('deadline').value;
+            const file = document.getElementById('projectFile').files[0];
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader"></span> Creating...';
+
+            const result = await createProject(title, description, deadline, file);
+
+            if (result.success) {
+                showToast('Project created successfully!', 'success');
+                closeModal();
+                loadProjects();
+            } else {
+                showToast('Failed to create project: ' + result.message, 'danger');
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Create Project';
+        });
+
+        // Form submit - Update
+        document.getElementById('editProjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('editProjectId').value;
+            const title = document.getElementById('editTitle').value;
+            const description = document.getElementById('editDescription').value;
+            const deadline = document.getElementById('editDeadline').value;
+
+            const submitBtn = document.getElementById('editSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader"></span> Updating...';
+
+            const result = await updateProject(id, title, description, deadline);
+
+            if (result.success) {
+                showToast('Project updated successfully!', 'success');
+                closeEditModal();
+                loadProjects();
+            } else {
+                showToast('Failed to update project: ' + result.message, 'danger');
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Update Project';
+        });
+
+        // Initial load
+        loadProjects();
+    </script>
+</body>
+
+</html>

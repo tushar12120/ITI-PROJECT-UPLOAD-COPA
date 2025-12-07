@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Project - ITI COPA Student</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon">📚</div>
+                <span>ITI COPA</span>
+            </a>
+
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span class="icon">📊</span> Dashboard</a></li>
+                <li><a href="projects.html"><span class="icon">📁</span> Projects</a></li>
+                <li><a href="submit.html" class="active"><span class="icon">📤</span> Submit Project</a></li>
+                <li><a href="my-submissions.html"><span class="icon">📋</span> My Submissions</a></li>
+                <li><a href="my-results.html"><span class="icon">📝</span> My Results</a></li>
+                <li><a href="#" onclick="studentLogout()"><span class="icon">🚪</span> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1>📤 Submit Project</h1>
+                    <p class="welcome-text">Upload your completed project</p>
+                </div>
+            </div>
+
+            <div class="card" style="max-width: 600px;">
+                <form id="submitForm">
+                    <div class="form-group">
+                        <label class="form-label" for="projectSelect">Select Project *</label>
+                        <select id="projectSelect" class="form-control" required>
+                            <option value="">Loading projects...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Upload Your File *</label>
+                        <div class="file-input-wrapper">
+                            <div class="file-input-icon">📎</div>
+                            <p class="file-input-text">
+                                <span>Click to upload</span> or drag and drop<br>
+                                <small id="fileName">DOC, DOCX, XLS, XLSX, PDF, PPT, ZIP, etc.</small>
+                            </p>
+                            <input type="file" id="submissionFile"
+                                accept=".doc,.docx,.xls,.xlsx,.pdf,.ppt,.pptx,.zip,.rar,.png,.jpg,.jpeg" required>
+                        </div>
+                    </div>
+
+                    <div id="submitError" class="alert alert-danger hidden"></div>
+                    <div id="submitSuccess" class="alert alert-success hidden"></div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;" id="submitBtn">
+                        📤 Submit Project
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/student.js"></script>
+    <script>
+        // Protect route
+        if (!protectStudentRoute()) { }
+
+        // Status message container
+        let statusMessageDiv = null;
+
+        // Check submission status for selected project
+        async function checkSubmissionStatus(projectId) {
+            if (!statusMessageDiv) {
+                statusMessageDiv = document.createElement('div');
+                statusMessageDiv.id = 'statusMessage';
+                statusMessageDiv.className = 'alert';
+                statusMessageDiv.style.display = 'none';
+                document.getElementById('projectSelect').parentNode.appendChild(statusMessageDiv);
+            }
+
+            if (!projectId) {
+                statusMessageDiv.style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+                return;
+            }
+
+            const submission = await getSubmissionStatus(projectId);
+
+            if (submission) {
+                if (submission.status === 'pending') {
+                    statusMessageDiv.innerHTML = '⏳ <strong>Already Submitted!</strong><br>आपने यह project पहले से submit कर दिया है। Instructor review का इंतज़ार करें।';
+                    statusMessageDiv.className = 'alert alert-warning';
+                    statusMessageDiv.style.display = 'block';
+                    document.getElementById('submitBtn').disabled = true;
+                    document.getElementById('submitBtn').innerHTML = '⏳ Already Submitted';
+                } else if (submission.status === 'accepted') {
+                    statusMessageDiv.innerHTML = '✅ <strong>Accepted!</strong><br>आपका project पहले से Accept हो चुका है! दोबारा submit करने की ज़रूरत नहीं।';
+                    statusMessageDiv.className = 'alert alert-success';
+                    statusMessageDiv.style.display = 'block';
+                    document.getElementById('submitBtn').disabled = true;
+                    document.getElementById('submitBtn').innerHTML = '✅ Already Accepted';
+                } else if (submission.status === 'rejected') {
+                    statusMessageDiv.innerHTML = '❌ <strong>Rejected - Re-upload करें!</strong><br>' +
+                        (submission.admin_comment ? '💬 Instructor: ' + submission.admin_comment : 'Please review and re-submit');
+                    statusMessageDiv.className = 'alert alert-danger';
+                    statusMessageDiv.style.display = 'block';
+                    document.getElementById('submitBtn').disabled = false;
+                    document.getElementById('submitBtn').innerHTML = '🔄 Re-Upload Project';
+                }
+            } else {
+                statusMessageDiv.style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('submitBtn').innerHTML = '📤 Submit Project';
+            }
+        }
+
+        // Load projects for dropdown
+        async function loadProjectsDropdown() {
+            const projects = await getAvailableProjects();
+            const select = document.getElementById('projectSelect');
+
+            if (projects.length === 0) {
+                select.innerHTML = '<option value="">No projects available</option>';
+                return;
+            }
+
+            select.innerHTML = '<option value="">-- Select a project --</option>' +
+                projects.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+
+            // Add change listener to check status
+            select.addEventListener('change', () => {
+                checkSubmissionStatus(select.value);
+            });
+
+            // Check if project ID is in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            if (projectId) {
+                select.value = projectId;
+                checkSubmissionStatus(projectId);
+            }
+        }
+
+        // File input display
+        document.getElementById('submissionFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = file.name;
+            }
+        });
+
+        // Form submit
+        document.getElementById('submitForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const projectId = document.getElementById('projectSelect').value;
+            const file = document.getElementById('submissionFile').files[0];
+            const errorDiv = document.getElementById('submitError');
+            const successDiv = document.getElementById('submitSuccess');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!projectId) {
+                errorDiv.textContent = 'Please select a project';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (!file) {
+                errorDiv.textContent = 'Please select a file to upload';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loader"></span> Uploading...';
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            const result = await submitProject(projectId, file);
+
+            if (result.success) {
+                successDiv.textContent = '✅ Project submitted successfully!';
+                successDiv.classList.remove('hidden');
+                document.getElementById('submitForm').reset();
+                document.getElementById('fileName').textContent = 'DOC, DOCX, XLS, XLSX, PDF, PPT, ZIP, etc.';
+
+                setTimeout(() => {
+                    window.location.href = 'my-submissions.html';
+                }, 2000);
+            } else {
+                errorDiv.innerHTML = result.message;
+                errorDiv.classList.remove('hidden');
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '📤 Submit Project';
+        });
+
+        loadProjectsDropdown();
+    </script>
+</body>
+
+</html>
