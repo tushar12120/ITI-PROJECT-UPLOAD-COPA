@@ -175,7 +175,6 @@ function generateResultPDF(result) {
 
     // Header with Logo
     html += '<div class="header">';
-    html += '<div class="logo-container">' + ITI_LOGO_SVG + '</div>';
     html += '<div class="institute-name">Industrial Training Institute</div>';
     html += '<div class="trade-name">COPA Trade - Computer Operator & Programming Assistant</div>';
     html += '</div>';
