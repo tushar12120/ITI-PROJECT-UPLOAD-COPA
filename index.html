@@ -1,13 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ITI COPA - Project Submission System</title>
     <meta name="description" content="Student Project Submission System for ITI COPA">
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ITI COPA">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="ITI COPA">
+    <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+    <meta name="msapplication-TileColor" content="#0f172a">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar">
@@ -28,7 +43,8 @@
         <div class="container">
             <div class="hero-content">
                 <h1>Project Submission Portal</h1>
-                <p>Welcome to ITI COPA Project Submission System. Submit your assignments, track your progress, and manage projects efficiently.</p>
+                <p>Welcome to ITI COPA Project Submission System. Submit your assignments, track your progress, and
+                    manage projects efficiently.</p>
                 <div class="hero-buttons">
                     <a href="student/login.html" class="btn btn-primary btn-lg">👨‍🎓 Student Portal</a>
                     <a href="admin/login.html" class="btn btn-secondary btn-lg">🔐 Admin Panel</a>
@@ -45,6 +61,7 @@
                     <div class="feature-icon">📤</div>
                     <h3>Easy Submission</h3>
                     <p>Submit your projects with just a few clicks. Support for all file types.</p>
+                </div>
                 <div class="feature-card card">
                     <div class="feature-icon">📅</div>
                     <h3>Track Deadlines</h3>
@@ -63,5 +80,56 @@
     <footer style="text-align: center; padding: 2rem; color: var(--text-muted);">
         <p>© 2025 ITI COPA Project Submission System</p>
     </footer>
+
+    <!-- PWA Install Prompt -->
+    <div id="pwaInstallPrompt"
+        style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, #6366f1, #4f46e5); color:white; padding:15px 25px; border-radius:12px; box-shadow:0 10px 40px rgba(99,102,241,0.4); z-index:9999; font-family:'Inter',sans-serif;">
+        <span style="margin-right:15px;">📱 Install ITI COPA App</span>
+        <button onclick="installPWA()"
+            style="background:#fff; color:#6366f1; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600;">Install</button>
+        <button onclick="dismissInstall()"
+            style="background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.3); padding:8px 16px; border-radius:8px; cursor:pointer; margin-left:8px;">Later</button>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('✅ Service Worker registered'))
+                    .catch(err => console.log('❌ SW registration failed:', err));
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install button after 3 seconds
+            setTimeout(() => {
+                document.getElementById('pwaInstallPrompt').style.display = 'block';
+            }, 3000);
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(result => {
+                    if (result.outcome === 'accepted') {
+                        console.log('✅ PWA installed');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('pwaInstallPrompt').style.display = 'none';
+                });
+            }
+        }
+
+        function dismissInstall() {
+            document.getElementById('pwaInstallPrompt').style.display = 'none';
+        }
+    </script>
 </body>
+
 </html>
