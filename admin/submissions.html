@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submissions - ITI COPA Admin</title>
-        
+
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="../manifest.json">
     <meta name="theme-color" content="#6366f1">
@@ -209,12 +209,19 @@
             const ext = fileName.split('.').pop().toLowerCase();
 
             if (ext === 'pdf') {
-                // PDF - use iframe
+                // PDF - show quick view button (no heavy iframe for better performance)
                 content.innerHTML = `
-                    <iframe src="${fileUrl}" style="width: 100%; height: 70vh; border: 1px solid #ddd; border-radius: 8px;"></iframe>
+                    <div style="padding: 2rem;">
+                        <div style="font-size: 5rem; margin-bottom: 1rem;">📕</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">${fileName}</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">PDF Document</p>
+                        <a href="${fileUrl}" target="_blank" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            👁️ View PDF in New Tab
+                        </a>
+                    </div>
                 `;
             } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                // Image - display directly
+                // Image - display directly (images are fast)
                 content.innerHTML = `
                     <img src="${fileUrl}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);" alt="${fileName}">
                 `;
