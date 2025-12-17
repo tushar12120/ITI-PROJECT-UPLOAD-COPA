@@ -105,6 +105,110 @@
         // Protect route
         if (!protectStudentRoute()) { }
 
+        // Check for rejected submissions and show popup
+        async function checkRejectedSubmissions() {
+            const student = getCurrentStudent();
+            if (!student) return;
+
+            // Check if popup already shown in this session
+            const popupShown = sessionStorage.getItem('rejectedPopupShown_' + student.id);
+            if (popupShown) return;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('submissions')
+                    .select(`
+                        id,
+                        project_id,
+                        admin_comment,
+                        projects (title)
+                    `)
+                    .eq('student_id', student.id)
+                    .eq('status', 'rejected');
+
+                if (error || !data || data.length === 0) return;
+
+                // Mark popup as shown
+                sessionStorage.setItem('rejectedPopupShown_' + student.id, 'true');
+
+                // Create popup
+                const popup = document.createElement('div');
+                popup.id = 'rejectedPopup';
+                popup.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(135deg, #1e293b, #0f172a);
+                    border: 2px solid #ef4444;
+                    border-radius: 16px;
+                    padding: 2rem;
+                    max-width: 450px;
+                    width: 90%;
+                    z-index: 10000;
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+                    animation: popupIn 0.3s ease;
+                `;
+
+                popup.innerHTML = `
+                    <style>
+                        @keyframes popupIn {
+                            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+                            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                        }
+                    </style>
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <div style="font-size: 4rem;">❌</div>
+                        <h3 style="color: #ef4444; margin: 0.5rem 0;">Project Rejected!</h3>
+                        <p style="color: #94a3b8;">आपका project reject हो गया है, कृपया दोबारा submit करें</p>
+                    </div>
+                    <div style="background: rgba(239,68,68,0.1); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        ${data.map(s => `
+                            <div style="padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <strong style="color: #f8fafc;">📋 ${s.projects?.title || 'Project'}</strong>
+                                ${s.admin_comment ? `<p style="color: #94a3b8; margin: 0.25rem 0 0; font-size: 0.85rem;">💬 ${s.admin_comment}</p>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <a href="submit.html?project=${data[0].project_id}" class="btn btn-primary" style="flex: 1; text-align: center;">
+                            🔄 Re-Submit Now
+                        </a>
+                        <button onclick="closeRejectedPopup()" class="btn btn-secondary" style="flex: 1;">
+                            ✕ Close
+                        </button>
+                    </div>
+                `;
+
+                // Create overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'rejectedOverlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.7);
+                    z-index: 9999;
+                `;
+                overlay.onclick = closeRejectedPopup;
+
+                document.body.appendChild(overlay);
+                document.body.appendChild(popup);
+
+            } catch (err) {
+                console.error('Error checking rejected submissions:', err);
+            }
+        }
+
+        function closeRejectedPopup() {
+            const popup = document.getElementById('rejectedPopup');
+            const overlay = document.getElementById('rejectedOverlay');
+            if (popup) popup.remove();
+            if (overlay) overlay.remove();
+        }
+
         // Load announcements
         async function loadAnnouncements() {
             const container = document.getElementById('announcementsSection');
@@ -162,6 +266,7 @@
         // Initial load
         loadAnnouncements();
         loadDashboard();
+        checkRejectedSubmissions(); // Check for rejected projects
     </script>
     <script src="../js/pwa.js"></script>
 </body>
