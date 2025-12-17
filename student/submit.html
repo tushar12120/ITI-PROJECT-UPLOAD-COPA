@@ -294,11 +294,24 @@
                 img.alt = 'Preview';
                 previewContent.appendChild(img);
             } else if (ext === 'pdf') {
-                // PDF preview
-                const iframe = document.createElement('iframe');
-                iframe.className = 'file-preview-pdf';
-                iframe.src = URL.createObjectURL(file);
-                previewContent.appendChild(iframe);
+                // PDF - show icon and view button (no embed for performance)
+                const pdfUrl = URL.createObjectURL(file);
+                previewContent.innerHTML = `
+                    <div class="file-preview-icon" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));">
+                        📕
+                        <p style="font-size: 1rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            PDF Document
+                        </p>
+                    </div>
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <a href="${pdfUrl}" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            👁️ View PDF / देखें
+                        </a>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                            PDF नई tab में खुलेगी
+                        </p>
+                    </div>
+                `;
             } else {
                 // Generic file icon
                 previewContent.innerHTML = `
