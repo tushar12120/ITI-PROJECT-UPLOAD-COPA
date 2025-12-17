@@ -13,6 +13,61 @@
     <link rel="apple-touch-icon" href="../icons/icon-192x192.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* Tabs Styling */
+        .project-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .project-tabs .tab-btn {
+            flex: 1;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .project-tabs .tab-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .project-tabs .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .project-tabs .tab-btn .count-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .project-tabs .tab-btn.active .count-badge {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .tab-btn:not(.active) .count-badge {
+            background: var(--bg-input);
+        }
+    </style>
 </head>
 
 <body>
@@ -43,11 +98,21 @@
             <div class="page-header">
                 <div>
                     <h1>📤 Student Submissions</h1>
-                    <p class="welcome-text">View and download student submissions</p>
+                    <p class="welcome-text">View and manage student submissions</p>
                 </div>
                 <div class="d-flex gap-2 align-center">
                     <span id="submissionCount" class="badge badge-success">0 Submissions</span>
                 </div>
+            </div>
+
+            <!-- Tabs for Active/Old Submissions -->
+            <div class="project-tabs">
+                <button class="tab-btn active" id="activeTab" onclick="switchTab('active')">
+                    🟢 Active Project Submissions <span class="count-badge" id="activeCount">0</span>
+                </button>
+                <button class="tab-btn" id="oldTab" onclick="switchTab('old')">
+                    📦 Old Project Submissions <span class="count-badge" id="oldCount">0</span>
+                </button>
             </div>
 
             <!-- Filter Section -->
@@ -110,14 +175,68 @@
 
         let allSubmissions = [];
         let allProjects = [];
+        let currentTab = 'active';
 
-        // Load projects for filter dropdown
+        // Check if project is active (deadline not passed or no deadline)
+        function isProjectActive(project) {
+            if (!project || !project.deadline) return true;
+            return new Date(project.deadline) > new Date();
+        }
+
+        // Switch tab
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Update tab buttons
+            document.getElementById('activeTab').classList.toggle('active', tab === 'active');
+            document.getElementById('oldTab').classList.toggle('active', tab === 'old');
+
+            // Reload project filter with filtered projects
+            loadProjectsFilter();
+        }
+
+        // Load projects for filter dropdown (based on current tab)
         async function loadProjectsFilter() {
-            allProjects = await getProjects();
+            if (allProjects.length === 0) {
+                allProjects = await getProjects();
+            }
+
+            // Filter projects based on tab
+            const activeProjects = allProjects.filter(p => isProjectActive(p));
+            const oldProjects = allProjects.filter(p => !isProjectActive(p));
+
+            // Update tab counts
+            document.getElementById('activeCount').textContent = activeProjects.length;
+            document.getElementById('oldCount').textContent = oldProjects.length;
+
+            const projectsToShow = currentTab === 'active' ? activeProjects : oldProjects;
             const select = document.getElementById('projectFilter');
 
+            if (projectsToShow.length === 0) {
+                select.innerHTML = `<option value="">-- No ${currentTab === 'active' ? 'Active' : 'Old'} Projects --</option>`;
+                document.getElementById('submissionCount').textContent = '0 Submissions';
+                document.getElementById('submissionsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">${currentTab === 'active' ? '🟢' : '📦'}</div>
+                        <h3>No ${currentTab === 'active' ? 'Active' : 'Old'} Projects</h3>
+                        <p>${currentTab === 'active' ? 'कोई active project नहीं है' : 'कोई expired project नहीं है'}</p>
+                    </div>
+                `;
+                return;
+            }
+
             select.innerHTML = '<option value="">-- Select Project --</option>' +
-                allProjects.map(p => `<option value="${p.id}">📋 ${p.title}</option>`).join('');
+                projectsToShow.map(p => `<option value="${p.id}">📋 ${p.title}</option>`).join('');
+
+            // Show select project message
+            document.getElementById('submissionCount').textContent = '0 Submissions';
+            document.getElementById('submissionsList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📁</div>
+                    <h3>Select a Project</h3>
+                    <p>ऊपर से कोई project select करें submissions देखने के लिए</p>
+                </div>
+            `;
         }
 
         // Load and filter submissions
@@ -186,9 +305,8 @@
             }
         });
 
-        // Initial load - just load projects, show "select project" message
+        // Initial load
         loadProjectsFilter();
-        loadSubmissions();
 
         // ============================================
         // FILE PREVIEW FUNCTIONS
