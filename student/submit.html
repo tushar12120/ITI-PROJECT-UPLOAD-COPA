@@ -172,10 +172,9 @@
                             <div class="file-input-icon">📎</div>
                             <p class="file-input-text">
                                 <span>Click to upload</span> or drag and drop<br>
-                                <small id="fileName">DOC, DOCX, XLS, XLSX, PDF, PPT, ZIP, etc.</small>
+                                <small id="fileName">PDF, PNG, JPG, JPEG only</small>
                             </p>
-                            <input type="file" id="submissionFile"
-                                accept=".doc,.docx,.xls,.xlsx,.pdf,.ppt,.pptx,.zip,.rar,.png,.jpg,.jpeg" required>
+                            <input type="file" id="submissionFile" accept=".pdf,.png,.jpg,.jpeg" required>
                         </div>
                     </div>
 
@@ -325,7 +324,7 @@
             document.getElementById('filePreviewContainer').classList.remove('active');
             document.getElementById('fileInputWrapper').style.display = 'block';
             document.getElementById('submissionFile').value = '';
-            document.getElementById('fileName').textContent = 'DOC, DOCX, XLS, XLSX, PDF, PPT, ZIP, etc.';
+            document.getElementById('fileName').textContent = 'PDF, PNG, JPG, JPEG only';
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('confirmFile').checked = false;
         }
