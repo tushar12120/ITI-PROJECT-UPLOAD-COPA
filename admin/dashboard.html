@@ -58,17 +58,17 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon blue">📁</div>
+                    <div class="stat-icon blue">🟢</div>
                     <div class="stat-info">
                         <h3 id="statProjects">0</h3>
-                        <p>Total Projects</p>
+                        <p>Active Projects</p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon green">📤</div>
                     <div class="stat-info">
                         <h3 id="statSubmissions">0</h3>
-                        <p>Total Submissions</p>
+                        <p>Active Submissions</p>
                     </div>
                 </div>
             </div>
@@ -99,12 +99,39 @@
             // Redirect handled by protectAdminRoute
         }
 
-        // Load dashboard stats
+        // Check if project is active (deadline not passed or no deadline)
+        function isProjectActive(project) {
+            if (!project.deadline) return true;
+            return new Date(project.deadline) > new Date();
+        }
+
+        // Load dashboard stats - only active projects
         async function loadDashboard() {
-            const stats = await getDashboardStats();
-            document.getElementById('statStudents').textContent = stats.totalStudents;
-            document.getElementById('statProjects').textContent = stats.totalProjects;
-            document.getElementById('statSubmissions').textContent = stats.totalSubmissions;
+            try {
+                // Fetch all data
+                const [studentsRes, projectsRes, submissionsRes] = await Promise.all([
+                    supabaseClient.from('students').select('id', { count: 'exact' }),
+                    supabaseClient.from('projects').select('id, deadline'),
+                    supabaseClient.from('submissions').select('id, project_id, projects(deadline)')
+                ]);
+
+                // Count active projects only
+                const allProjects = projectsRes.data || [];
+                const activeProjects = allProjects.filter(p => isProjectActive(p));
+
+                // Count submissions for active projects only
+                const allSubmissions = submissionsRes.data || [];
+                const activeSubmissions = allSubmissions.filter(s => {
+                    if (!s.projects || !s.projects.deadline) return true;
+                    return new Date(s.projects.deadline) > new Date();
+                });
+
+                document.getElementById('statStudents').textContent = studentsRes.count || 0;
+                document.getElementById('statProjects').textContent = activeProjects.length;
+                document.getElementById('statSubmissions').textContent = activeSubmissions.length;
+            } catch (err) {
+                console.error('Dashboard error:', err);
+            }
         }
 
         // Mobile menu toggle

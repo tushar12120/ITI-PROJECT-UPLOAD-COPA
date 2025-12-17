@@ -54,10 +54,10 @@
             <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon blue">📁</div>
+                    <div class="stat-icon blue">🟢</div>
                     <div class="stat-info">
                         <h3 id="statProjects">0</h3>
-                        <p>Available Projects</p>
+                        <p>Active Projects</p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -258,9 +258,21 @@
                 document.getElementById('profileTrade').textContent = student.trade;
             }
 
-            const stats = await getStudentDashboardStats();
-            document.getElementById('statProjects').textContent = stats.totalProjects;
-            document.getElementById('statSubmissions').textContent = stats.mySubmissions;
+            // Get active projects count (only those with future deadline or no deadline)
+            try {
+                const [projectsRes, submissionsRes] = await Promise.all([
+                    supabaseClient.from('projects').select('id, deadline'),
+                    supabaseClient.from('submissions').select('id').eq('student_id', student?.id)
+                ]);
+
+                const allProjects = projectsRes.data || [];
+                const activeProjects = allProjects.filter(p => !p.deadline || new Date(p.deadline) > new Date());
+
+                document.getElementById('statProjects').textContent = activeProjects.length;
+                document.getElementById('statSubmissions').textContent = submissionsRes.data?.length || 0;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
         }
 
         // Initial load
