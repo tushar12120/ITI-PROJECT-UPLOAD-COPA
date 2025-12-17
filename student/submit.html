@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Project - ITI COPA Student</title>
-        
+
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="../manifest.json">
     <meta name="theme-color" content="#6366f1">
@@ -13,6 +13,116 @@
     <link rel="apple-touch-icon" href="../icons/icon-192x192.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        /* File Preview Styles */
+        .file-preview-container {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            display: none;
+        }
+
+        .file-preview-container.active {
+            display: block;
+            border-color: var(--primary);
+        }
+
+        .file-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .file-preview-header h4 {
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .file-preview-info {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .file-preview-info dt {
+            color: var(--text-muted);
+        }
+
+        .file-preview-info dd {
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .file-preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .file-preview-pdf {
+            width: 100%;
+            height: 400px;
+            margin-top: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .file-preview-icon {
+            font-size: 4rem;
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(14, 165, 233, 0.1));
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .file-preview-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-change-file {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-change-file:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .confirm-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: var(--radius);
+        }
+
+        .confirm-checkbox input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .confirm-checkbox label {
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
@@ -47,7 +157,7 @@
                 </div>
             </div>
 
-            <div class="card" style="max-width: 600px;">
+            <div class="card" style="max-width: 700px;">
                 <form id="submitForm">
                     <div class="form-group">
                         <label class="form-label" for="projectSelect">Select Project *</label>
@@ -58,7 +168,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Upload Your File *</label>
-                        <div class="file-input-wrapper">
+                        <div class="file-input-wrapper" id="fileInputWrapper">
                             <div class="file-input-icon">📎</div>
                             <p class="file-input-text">
                                 <span>Click to upload</span> or drag and drop<br>
@@ -69,10 +179,50 @@
                         </div>
                     </div>
 
+                    <!-- File Preview Section -->
+                    <div class="file-preview-container" id="filePreviewContainer">
+                        <div class="file-preview-header">
+                            <h4>📋 File Preview / फ़ाइल जांचें</h4>
+                            <span class="badge badge-primary" id="fileTypeBadge">-</span>
+                        </div>
+
+                        <dl class="file-preview-info">
+                            <dt>📄 File Name:</dt>
+                            <dd id="previewFileName">-</dd>
+
+                            <dt>📦 File Size:</dt>
+                            <dd id="previewFileSize">-</dd>
+
+                            <dt>📁 File Type:</dt>
+                            <dd id="previewFileType">-</dd>
+
+                            <dt>📅 Last Modified:</dt>
+                            <dd id="previewFileDate">-</dd>
+                        </dl>
+
+                        <!-- Preview Area -->
+                        <div id="previewContent"></div>
+
+                        <div class="file-preview-actions">
+                            <button type="button" class="btn btn-sm btn-change-file" onclick="changeFile()">
+                                🔄 Change File / दूसरी फ़ाइल चुनें
+                            </button>
+                        </div>
+
+                        <!-- Confirmation Checkbox -->
+                        <div class="confirm-checkbox">
+                            <input type="checkbox" id="confirmFile" required>
+                            <label for="confirmFile">
+                                ✅ मैंने फ़ाइल देख ली है और यह सही है / I have reviewed the file and it is correct
+                            </label>
+                        </div>
+                    </div>
+
                     <div id="submitError" class="alert alert-danger hidden"></div>
                     <div id="submitSuccess" class="alert alert-success hidden"></div>
 
-                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;" id="submitBtn">
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1.5rem;"
+                        id="submitBtn" disabled>
                         📤 Submit Project
                     </button>
                 </form>
@@ -91,6 +241,95 @@
         // Status message container
         let statusMessageDiv = null;
 
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Get file icon based on type
+        function getFileIcon(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📕',
+                'doc': '📘', 'docx': '📘',
+                'xls': '📗', 'xlsx': '📗',
+                'ppt': '📙', 'pptx': '📙',
+                'zip': '📦', 'rar': '📦',
+                'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️', 'gif': '🖼️',
+                'txt': '📝',
+                'html': '🌐', 'css': '🎨', 'js': '⚡'
+            };
+            return icons[ext] || '📄';
+        }
+
+        // Show file preview
+        function showFilePreview(file) {
+            const container = document.getElementById('filePreviewContainer');
+            const previewContent = document.getElementById('previewContent');
+
+            // Show container
+            container.classList.add('active');
+
+            // Update file info
+            document.getElementById('previewFileName').textContent = file.name;
+            document.getElementById('previewFileSize').textContent = formatFileSize(file.size);
+            document.getElementById('previewFileType').textContent = file.type || 'Unknown';
+            document.getElementById('previewFileDate').textContent = new Date(file.lastModified).toLocaleString('hi-IN');
+            document.getElementById('fileTypeBadge').textContent = file.name.split('.').pop().toUpperCase();
+
+            // Clear previous preview
+            previewContent.innerHTML = '';
+
+            // Generate preview based on file type
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) {
+                // Image preview
+                const img = document.createElement('img');
+                img.className = 'file-preview-image';
+                img.src = URL.createObjectURL(file);
+                img.alt = 'Preview';
+                previewContent.appendChild(img);
+            } else if (ext === 'pdf') {
+                // PDF preview
+                const iframe = document.createElement('iframe');
+                iframe.className = 'file-preview-pdf';
+                iframe.src = URL.createObjectURL(file);
+                previewContent.appendChild(iframe);
+            } else {
+                // Generic file icon
+                previewContent.innerHTML = `
+                    <div class="file-preview-icon">
+                        ${getFileIcon(file.name)}
+                        <p style="font-size: 1rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                            ${file.name.split('.').pop().toUpperCase()} File
+                        </p>
+                    </div>
+                `;
+            }
+
+            // Hide file input wrapper
+            document.getElementById('fileInputWrapper').style.display = 'none';
+
+            // Disable submit until confirmed
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('confirmFile').checked = false;
+        }
+
+        // Change file
+        function changeFile() {
+            document.getElementById('filePreviewContainer').classList.remove('active');
+            document.getElementById('fileInputWrapper').style.display = 'block';
+            document.getElementById('submissionFile').value = '';
+            document.getElementById('fileName').textContent = 'DOC, DOCX, XLS, XLSX, PDF, PPT, ZIP, etc.';
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('confirmFile').checked = false;
+        }
+
         // Check submission status for selected project
         async function checkSubmissionStatus(projectId) {
             if (!statusMessageDiv) {
@@ -103,7 +342,6 @@
 
             if (!projectId) {
                 statusMessageDiv.style.display = 'none';
-                document.getElementById('submitBtn').disabled = false;
                 return;
             }
 
@@ -127,12 +365,10 @@
                         (submission.admin_comment ? '💬 Instructor: ' + submission.admin_comment : 'Please review and re-submit');
                     statusMessageDiv.className = 'alert alert-danger';
                     statusMessageDiv.style.display = 'block';
-                    document.getElementById('submitBtn').disabled = false;
                     document.getElementById('submitBtn').innerHTML = '🔄 Re-Upload Project';
                 }
             } else {
                 statusMessageDiv.style.display = 'none';
-                document.getElementById('submitBtn').disabled = false;
                 document.getElementById('submitBtn').innerHTML = '📤 Submit Project';
             }
         }
@@ -164,11 +400,24 @@
             }
         }
 
-        // File input display
+        // File input change - show preview
         document.getElementById('submissionFile').addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
-                document.getElementById('fileName').textContent = file.name;
+                showFilePreview(file);
+            }
+        });
+
+        // Confirmation checkbox change
+        document.getElementById('confirmFile').addEventListener('change', function () {
+            const isChecked = this.checked;
+            const file = document.getElementById('submissionFile').files[0];
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (isChecked && file) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
             }
         });
 
@@ -178,6 +427,7 @@
 
             const projectId = document.getElementById('projectSelect').value;
             const file = document.getElementById('submissionFile').files[0];
+            const confirmChecked = document.getElementById('confirmFile').checked;
             const errorDiv = document.getElementById('submitError');
             const successDiv = document.getElementById('submitSuccess');
             const submitBtn = document.getElementById('submitBtn');
@@ -194,6 +444,12 @@
                 return;
             }
 
+            if (!confirmChecked) {
+                errorDiv.textContent = 'कृपया पहले फ़ाइल verify करें / Please confirm the file first';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="loader"></span> Uploading...';
             errorDiv.classList.add('hidden');
@@ -205,7 +461,7 @@
                 successDiv.textContent = '✅ Project submitted successfully!';
                 successDiv.classList.remove('hidden');
                 document.getElementById('submitForm').reset();
-                document.getElementById('fileName').textContent = 'DOC, DOCX, XLS, XLSX, PDF, PPT, ZIP, etc.';
+                changeFile(); // Reset preview
 
                 setTimeout(() => {
                     window.location.href = 'my-submissions.html';
@@ -213,10 +469,9 @@
             } else {
                 errorDiv.innerHTML = result.message;
                 errorDiv.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '📤 Submit Project';
             }
-
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '📤 Submit Project';
         });
 
         loadProjectsDropdown();
