@@ -1,5 +1,5 @@
 // Service Worker for ITI COPA PWA
-const CACHE_NAME = 'iti-copa-v5';
+const CACHE_NAME = 'iti-copa-v5.1.1';
 const urlsToCache = [
     './',
     './index.html',
