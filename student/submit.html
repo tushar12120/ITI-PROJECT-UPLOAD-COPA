@@ -103,30 +103,44 @@
 
         .confirm-checkbox {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.75rem;
             margin-top: 1.5rem;
             padding: 1rem;
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid var(--success);
             border-radius: var(--radius);
+            position: relative;
         }
 
-        .confirm-checkbox input {
-            width: 24px;
-            height: 24px;
-            min-width: 24px;
-            cursor: pointer;
-            accent-color: var(--success);
+        .confirm-checkbox input[type="checkbox"] {
+            width: 24px !important;
+            height: 24px !important;
+            min-width: 24px !important;
+            min-height: 24px !important;
+            cursor: pointer !important;
+            accent-color: #10b981;
             flex-shrink: 0;
-            -webkit-appearance: checkbox;
-            appearance: checkbox;
+            margin: 0;
+            padding: 0;
+            opacity: 1 !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 10;
+            -webkit-appearance: checkbox !important;
+            -moz-appearance: checkbox !important;
+            appearance: checkbox !important;
+            background: #1e293b;
+            border: 2px solid #10b981;
+            border-radius: 4px;
         }
 
         .confirm-checkbox label {
             color: var(--text-primary);
             cursor: pointer;
             flex: 1;
+            line-height: 1.5;
+            user-select: none;
         }
     </style>
 </head>
