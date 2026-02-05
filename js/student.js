@@ -74,7 +74,7 @@ async function studentLogin(email, password) {
 // PROJECTS (Student View)
 // ============================================
 
-// Get available projects
+// Get available projects (only active - deadline not expired)
 async function getAvailableProjects() {
     try {
         const { data, error } = await supabaseDB
@@ -83,7 +83,15 @@ async function getAvailableProjects() {
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return data || [];
+
+        // Filter only active projects (deadline not expired or no deadline)
+        const now = new Date();
+        const activeProjects = (data || []).filter(project => {
+            if (!project.deadline) return true; // No deadline = always active
+            return new Date(project.deadline) > now; // Deadline not expired
+        });
+
+        return activeProjects;
     } catch (err) {
         console.error('Error fetching projects:', err);
         return [];
