@@ -113,14 +113,20 @@
         }
 
         .confirm-checkbox input {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
             cursor: pointer;
+            accent-color: var(--success);
+            flex-shrink: 0;
+            -webkit-appearance: checkbox;
+            appearance: checkbox;
         }
 
         .confirm-checkbox label {
             color: var(--text-primary);
             cursor: pointer;
+            flex: 1;
         }
     </style>
 </head>
