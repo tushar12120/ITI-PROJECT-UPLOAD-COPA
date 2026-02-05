@@ -172,9 +172,9 @@
                             <div class="file-input-icon">📎</div>
                             <p class="file-input-text">
                                 <span>Click to upload</span> or drag and drop<br>
-                                <small id="fileName">PDF, PNG, JPG, JPEG only</small>
+                                <small id="fileName">PDF only / केवल PDF</small>
                             </p>
-                            <input type="file" id="submissionFile" accept=".pdf,.png,.jpg,.jpeg" required>
+                            <input type="file" id="submissionFile" accept=".pdf" required>
                         </div>
                     </div>
 
@@ -337,7 +337,7 @@
             document.getElementById('filePreviewContainer').classList.remove('active');
             document.getElementById('fileInputWrapper').style.display = 'block';
             document.getElementById('submissionFile').value = '';
-            document.getElementById('fileName').textContent = 'PDF, PNG, JPG, JPEG only';
+            document.getElementById('fileName').textContent = 'PDF only / केवल PDF';
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('confirmFile').checked = false;
         }

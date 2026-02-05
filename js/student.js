@@ -123,6 +123,14 @@ async function submitProject(projectId, file) {
             return { success: false, message: 'Please login first' };
         }
 
+        // Validate file type - Only PDF allowed
+        if (file.name.split('.').pop().toLowerCase() !== 'pdf') {
+            return {
+                success: false,
+                message: '❌ केवल PDF files allowed हैं! / Only PDF files are allowed!'
+            };
+        }
+
         // Check project deadline first
         const { data: project } = await supabaseDB
             .from('projects')
@@ -172,7 +180,7 @@ async function submitProject(projectId, file) {
         const fileExt = file.name.split('.').pop();
         const safeName = student.name.replace(/\s+/g, '_');
         const safeTitle = project?.title?.replace(/\s+/g, '_') || 'Project';
-        const fileName = `${safeName}_${safeTitle}_${Date.now()}.${fileExt}`;
+        const fileName = `${safeName}_${safeTitle}_${Date.now()}.${file.name.split('.').pop().toLowerCase()}`;
 
         // Upload file
         const { data: uploadData, error: uploadError } = await supabaseDB.storage
