@@ -392,6 +392,7 @@ a:hover {
   mask-composite: exclude;
   opacity: 0;
   transition: var(--transition);
+  pointer-events: none;
 }
 
 .card:hover {
